@@ -47,3 +47,4 @@ geckodriver.log
 /.ipynb_checkpoints/
 /.ipython/
 /.local/
+/.jupyter/
