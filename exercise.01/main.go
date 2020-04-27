@@ -34,7 +34,7 @@ type Point struct {
 
 type Points []Point
 
-func (points Points) get() (xs []float64, ys []float64) {
+func (points Points) getXY() (xs []float64, ys []float64) {
 
 	xs = make([]float64, len(points))
 	ys = make([]float64, len(points))
@@ -49,7 +49,7 @@ func (points Points) get() (xs []float64, ys []float64) {
 
 func (points Points) export() SimpleExport {
 
-	xi, yi := points.get()
+	xi, yi := points.getXY()
 	return SimpleExport{
 		XPoints: xi,
 		YPoints: yi,
@@ -64,10 +64,13 @@ func generateRandomPoints(num int) Points {
 
 	points := make(Points, num)
 
+	stepSize := 1.0 / float64(num)
+
 	for inx := 0; inx < num; inx++ {
 
-		x := rand.Float64()
 		noise := randFloat(-0.3, 0.3)
+
+		x := stepSize * float64(inx)
 		y := math.Sin(2*math.Pi*x) + noise
 
 		point := Point{
@@ -155,7 +158,7 @@ func stochasticGradientDescent(points Points, iterations int, a float64, d int) 
 
 	log.Printf(thetas2FunctionString(thetas...))
 	plot := plotFunction(thetas...)
-	xs, ys := plot.get()
+	xs, ys := plot.getXY()
 	simple.WritePretty(plot.export(), "notebook/exercise.01.sgd.json")
 	simple.WritePretty(learnrate, "notebook/exercise.01.learnrate.json")
 
@@ -172,24 +175,29 @@ func stochasticGradientDescent(points Points, iterations int, a float64, d int) 
 
 func main() {
 
+	// seed with birthday to get same results for every try.
 	rand.Seed(28051998)
 
-	points := generateRandomPoints(100)
-	plot := points.export()
+	// generate 100 random points.
+	randomPoints := generateRandomPoints(100)
+
+	// export and save generated points
+	plot := randomPoints.export()
 	simple.WritePretty(plot, "notebook/exercise.01.json")
 
-	iterations := 10000
+	// iteration count
+	iterations := 5000
 	// learnRate := 0.001
 	learnRate := 0.005
 	// learnRate := 0.5
 
 	data := []SGDExport{
-		// stochasticGradientDescent(points, iterations, learnRate, 0),
-		// stochasticGradientDescent(points, iterations, learnRate, 1),
-		// stochasticGradientDescent(points, iterations, learnRate, 2),
-		// stochasticGradientDescent(points, iterations, learnRate, 3),
-		// stochasticGradientDescent(points, iterations, learnRate, 4),
-		stochasticGradientDescent(points, iterations, learnRate, 6),
+		// stochasticGradientDescent(randomPoints, iterations, learnRate, 0),
+		// stochasticGradientDescent(randomPoints, iterations, learnRate, 1),
+		// stochasticGradientDescent(randomPoints, iterations, learnRate, 2),
+		// stochasticGradientDescent(randomPoints, iterations, learnRate, 3),
+		// stochasticGradientDescent(randomPoints, iterations, learnRate, 4),
+		stochasticGradientDescent(randomPoints, iterations, learnRate, 6),
 	}
 
 	simple.WritePretty(data, "notebook/exercise.01.sgd.json")
