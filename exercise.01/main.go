@@ -15,11 +15,13 @@ const (
 	iterations   = 5000
 )
 
+// Exported Struct for python matplotlib notebook
 type SimpleExport struct {
 	XPoints []float64
 	YPoints []float64
 }
 
+// SGD = Stochastic Gradient Descent
 type SGDExport struct {
 	Name             string
 	Thetas           []float64
@@ -32,14 +34,15 @@ type SGDExport struct {
 	Error            []float64
 }
 
+// Point Struct
 type Point struct {
-	X     float64
-	Y     float64
-	Noise float64
+	X float64
+	Y float64
 }
 
 type Points []Point
 
+// Get X and Y arrays as float lists.
 func (points Points) getXY() (xs []float64, ys []float64) {
 
 	xs = make([]float64, len(points))
@@ -53,6 +56,7 @@ func (points Points) getXY() (xs []float64, ys []float64) {
 	return xs, ys
 }
 
+// Export as Xs and Ys list.
 func (points Points) export() SimpleExport {
 
 	xi, yi := points.getXY()
@@ -62,11 +66,12 @@ func (points Points) export() SimpleExport {
 	}
 }
 
+// Random float value between min and max
 func randFloat(min, max float64) float64 {
 	return min + rand.Float64()*(max-min)
 }
 
-// (1) Generate 100 artificial data points (xi,yi) where
+// Generate artificial data points (xi,yi) where
 // each xi is randomly generated from the interval [0, 1]
 // and yi = sin(2πxi) + ε. Here, ε is a random noise
 // value in the interval [−0.3, 0.3].
@@ -83,9 +88,8 @@ func generateRandomPoints(num int) Points {
 		y := math.Sin(2*math.Pi*x) + noise
 
 		point := Point{
-			X:     x,
-			Y:     y,
-			Noise: noise,
+			X: x,
+			Y: y,
 		}
 
 		points[inx] = point
@@ -94,7 +98,7 @@ func generateRandomPoints(num int) Points {
 	return points
 }
 
-// convert thetas to a function string
+// Convert thetas to a function string
 func thetas2FunctionString(thetas []float64) string {
 
 	parts := make([]string, len(thetas))
@@ -105,7 +109,7 @@ func thetas2FunctionString(thetas []float64) string {
 	return "y = " + strings.Join(parts, " + ")
 }
 
-// get points for h in interval form 0.0 to 1.0 for step size.
+// Get x and y points for h in interval [0.0, 1.0]
 func plotFunction(steps int, thetas []float64) Points {
 
 	step := 1.0 / float64(steps)
@@ -124,7 +128,7 @@ func plotFunction(steps int, thetas []float64) Points {
 	return points
 }
 
-// h theta function for x
+// Calculate y value with h-theta function for x
 func hypotheses(x float64, thetas []float64) float64 {
 
 	sum := 0.0
@@ -134,6 +138,19 @@ func hypotheses(x float64, thetas []float64) float64 {
 	}
 
 	return sum
+}
+
+// Error function for points and thetas.
+// (Part of task 5 of Report)
+func eTheta(trainingPoints Points, thetas []float64) float64 {
+
+	eTheta := 0.0
+
+	for _, point := range trainingPoints {
+		eTheta += math.Pow(hypotheses(point.X, thetas)-point.Y, float64(2))
+	}
+
+	return eTheta * 0.5
 }
 
 // Stochastic Gradient Descent algorithm
@@ -166,13 +183,11 @@ func stochasticGradientDescent(
 			}
 		}
 
-		jerror := 0.0
-
-		for _, point := range trainingPoints {
-			jerror += math.Pow(hypotheses(point.X, thetas)-point.Y, float64(2))
-		}
-
-		errorRate[idx] = jerror * 0.5
+		// error stuff
+		eTheta := eTheta(trainingPoints, thetas)
+		m := float64(len(trainingPoints))
+		erms := math.Sqrt((2.0 * eTheta) / m)
+		errorRate[idx] = erms
 	}
 
 	plot := plotFunction(len(trainingPoints), thetas)
@@ -212,7 +227,7 @@ func main() {
 
 	// export and save generated points
 	plot := randomPoints.export()
-	simple.WritePretty(plot, notebookPath+"/exercise.01.json")
+	simple.WritePretty(plot, notebookPath+"/sin-points-with-noise.json")
 
 	examples := []SGDExport{
 		// stochasticGradientDescent(randomPoints, 0.001, 3),
@@ -223,8 +238,8 @@ func main() {
 		// stochasticGradientDescent(randomPoints, 0.01, 4),
 		// stochasticGradientDescent(randomPoints, 0.01, 5),
 		// stochasticGradientDescent(randomPoints, 0.01, 6),
-		stochasticGradientDescent(randomPoints, 0.01, 7),
+		stochasticGradientDescent(randomPoints, 0.1, 5),
 	}
 
-	simple.WritePretty(examples, notebookPath+"/exercise.01.sgd.json")
+	simple.WritePretty(examples, notebookPath+"/stochastic-gradient-descent.results.json")
 }
