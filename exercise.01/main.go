@@ -2,13 +2,17 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"math/rand"
-	"sort"
+	"os"
 	"strings"
 
 	"github.com/patrickz98/uni.2020.machine-learning/simple"
+)
+
+const (
+	notebookPath = "exercise.01.notebook"
+	iterations   = 5000
 )
 
 type SimpleExport struct {
@@ -17,13 +21,15 @@ type SimpleExport struct {
 }
 
 type SGDExport struct {
-	Thetas     []float64
-	Function   string
-	Iterations int
-	D          int
-	A          float64
-	XPoints    []float64
-	YPoints    []float64
+	Name             string
+	Thetas           []float64
+	FunctionStr      string
+	Iterations       int
+	PolynomialDegree int
+	LearnRate        float64
+	XPoints          []float64
+	YPoints          []float64
+	Error            []float64
 }
 
 type Point struct {
@@ -60,10 +66,13 @@ func randFloat(min, max float64) float64 {
 	return min + rand.Float64()*(max-min)
 }
 
+// (1) Generate 100 artificial data points (xi,yi) where
+// each xi is randomly generated from the interval [0, 1]
+// and yi = sin(2πxi) + ε. Here, ε is a random noise
+// value in the interval [−0.3, 0.3].
 func generateRandomPoints(num int) Points {
 
 	points := make(Points, num)
-
 	stepSize := 1.0 / float64(num)
 
 	for inx := 0; inx < num; inx++ {
@@ -82,28 +91,24 @@ func generateRandomPoints(num int) Points {
 		points[inx] = point
 	}
 
-	sort.Slice(points, func(i, j int) bool {
-		return points[i].X < points[j].X
-	})
-
 	return points
 }
 
-func thetas2FunctionString(thetas ...float64) string {
+// convert thetas to a function string
+func thetas2FunctionString(thetas []float64) string {
 
 	parts := make([]string, len(thetas))
 	for inx, th := range thetas {
-		parts[inx] = fmt.Sprint(th) + "*x^" + fmt.Sprint(inx)
+		parts[inx] = fmt.Sprintf("%f * x ^ %d", th, inx)
 	}
 
 	return "y = " + strings.Join(parts, " + ")
 }
 
-func plotFunction(thetas ...float64) Points {
+// get points for h in interval form 0.0 to 1.0 for step size.
+func plotFunction(steps int, thetas []float64) Points {
 
-	steps := 100
 	step := 1.0 / float64(steps)
-
 	points := make(Points, steps)
 
 	for inx := 0; inx < steps; inx++ {
@@ -112,15 +117,15 @@ func plotFunction(thetas ...float64) Points {
 
 		points[inx] = Point{
 			X: x,
-			Y: hypotheses(x, thetas...),
+			Y: hypotheses(x, thetas),
 		}
 	}
 
 	return points
 }
 
-// hθ(x) = θ0 + θ1x1 + θ2x2
-func hypotheses(x float64, thetas ...float64) float64 {
+// h theta function for x
+func hypotheses(x float64, thetas []float64) float64 {
 
 	sum := 0.0
 
@@ -131,74 +136,95 @@ func hypotheses(x float64, thetas ...float64) float64 {
 	return sum
 }
 
-func stochasticGradientDescent(points Points, iterations int, a float64, d int) SGDExport {
+// Stochastic Gradient Descent algorithm
+func stochasticGradientDescent(
+	// training data with x and y
+	trainingPoints Points,
+	// learn rate aka alpher
+	learnRate float64,
+	// degree of the polynomial (D)
+	polynomialDegree int) SGDExport {
 
-	thetas := make([]float64, d)
-	for inx := 0; inx < d; inx++ {
+	thetas := make([]float64, polynomialDegree+1)
+	for inx := 0; inx <= polynomialDegree; inx++ {
 		thetas[inx] = randFloat(-0.5, 0.5)
 	}
 
-	learnrate := make([]float64, iterations)
+	errorRate := make([]float64, iterations)
 	for idx := 0; idx < iterations; idx++ {
 
-		for _, point := range points {
+		for _, point := range trainingPoints {
 			for j := range thetas {
-				thetas[j] += a * (point.Y - hypotheses(point.X, thetas...)) * math.Pow(point.X, float64(j))
+
+				// The last factor (xi)j means:
+				// the factor multiplying parameterθj in
+				// the polynmial function, which in this
+				// case it will be xi to the power of j.
+				xij := math.Pow(point.X, float64(j))
+
+				thetas[j] += learnRate * (point.Y - hypotheses(point.X, thetas)) * xij
 			}
 		}
 
 		jerror := 0.0
 
-		for _, point := range points {
-			jerror += math.Pow(hypotheses(point.X, thetas...)-point.Y, float64(2))
+		for _, point := range trainingPoints {
+			jerror += math.Pow(hypotheses(point.X, thetas)-point.Y, float64(2))
 		}
 
-		learnrate[idx] = jerror * 0.5
+		errorRate[idx] = jerror * 0.5
 	}
 
-	log.Printf(thetas2FunctionString(thetas...))
-	plot := plotFunction(thetas...)
+	plot := plotFunction(len(trainingPoints), thetas)
 	xs, ys := plot.getXY()
-	simple.WritePretty(plot.export(), "notebook/exercise.01.sgd.json")
-	simple.WritePretty(learnrate, "notebook/exercise.01.learnrate.json")
 
 	return SGDExport{
-		Thetas:     thetas,
-		Function:   thetas2FunctionString(thetas...),
-		Iterations: iterations,
-		D:          d,
-		A:          a,
-		XPoints:    xs,
-		YPoints:    ys,
+		Name:             fmt.Sprintf("D=%v a=%v", polynomialDegree, learnRate),
+		Thetas:           thetas,
+		FunctionStr:      thetas2FunctionString(thetas),
+		Iterations:       iterations,
+		PolynomialDegree: polynomialDegree,
+		LearnRate:        learnRate,
+		XPoints:          xs,
+		YPoints:          ys,
+		Error:            errorRate,
 	}
 }
 
 func main() {
 
+	//
+	// Setup
+	//
+
 	// seed with birthday to get same results for every try.
 	rand.Seed(28051998)
+
+	// mkdir data export dir
+	_ = os.MkdirAll(notebookPath, 0755)
+
+	//
+	// Stochastic Gradient Discent
+	//
 
 	// generate 100 random points.
 	randomPoints := generateRandomPoints(100)
 
 	// export and save generated points
 	plot := randomPoints.export()
-	simple.WritePretty(plot, "notebook/exercise.01.json")
+	simple.WritePretty(plot, notebookPath+"/exercise.01.json")
 
-	// iteration count
-	iterations := 5000
-	// learnRate := 0.001
-	learnRate := 0.005
-	// learnRate := 0.5
-
-	data := []SGDExport{
-		// stochasticGradientDescent(randomPoints, iterations, learnRate, 0),
-		// stochasticGradientDescent(randomPoints, iterations, learnRate, 1),
-		// stochasticGradientDescent(randomPoints, iterations, learnRate, 2),
-		// stochasticGradientDescent(randomPoints, iterations, learnRate, 3),
-		// stochasticGradientDescent(randomPoints, iterations, learnRate, 4),
-		stochasticGradientDescent(randomPoints, iterations, learnRate, 6),
+	examples := []SGDExport{
+		// stochasticGradientDescent(randomPoints, 0.001, 3),
+		// stochasticGradientDescent(randomPoints, 0.001, 4),
+		// stochasticGradientDescent(randomPoints, 0.001, 5),
+		// stochasticGradientDescent(randomPoints, 0.001, 6),
+		// stochasticGradientDescent(randomPoints, 0.01, 3),
+		// stochasticGradientDescent(randomPoints, 0.01, 4),
+		// stochasticGradientDescent(randomPoints, 0.01, 5),
+		// stochasticGradientDescent(randomPoints, 0.01, 6),
+		stochasticGradientDescent(randomPoints, 0.01, 7),
 	}
 
-	simple.WritePretty(data, "notebook/exercise.01.sgd.json")
+	simple.WritePretty(examples, notebookPath+"/exercise.01.sgd.json")
 }
