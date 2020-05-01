@@ -66,11 +66,6 @@ func (points Points) export() SimpleExport {
 	}
 }
 
-// Random float value between min and max
-func randFloat(min, max float64) float64 {
-	return min + rand.Float64()*(max-min)
-}
-
 // Generate artificial data points (xi,yi) where
 // each xi is randomly generated from the interval [0, 1]
 // and yi = sin(2πxi) + ε. Here, ε is a random noise
@@ -82,7 +77,7 @@ func generateRandomPoints(num int) Points {
 
 	for inx := 0; inx < num; inx++ {
 
-		noise := randFloat(-0.3, 0.3)
+		noise := simple.RandFloat(-0.3, 0.3)
 
 		x := stepSize * float64(inx)
 		y := math.Sin(2*math.Pi*x) + noise
@@ -164,7 +159,7 @@ func stochasticGradientDescent(
 
 	thetas := make([]float64, polynomialDegree+1)
 	for inx := 0; inx <= polynomialDegree; inx++ {
-		thetas[inx] = randFloat(-0.5, 0.5)
+		thetas[inx] = simple.RandFloat(-0.5, 0.5)
 	}
 
 	errorRate := make([]float64, iterations)
