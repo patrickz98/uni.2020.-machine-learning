@@ -146,7 +146,6 @@ func LogisticRegressionAlgorithm(learnRate float64, data DataPoints) {
 	log.Printf("Trained model: %v\n", model.str())
 
 	simple.WritePretty(errorCurve, exportDir+"/errorCurve.json")
-	simple.WritePretty(data, exportDir+"/trainingPoints.json")
 	simple.WritePretty(model.export(), exportDir+"/model.final.json")
 }
 
@@ -177,6 +176,8 @@ func main() {
 		point := DataPoint{dim1, dim2, label}
 		data = append(data, point)
 	}
+
+	simple.WritePretty(data, exportDir+"/trainingPoints.json")
 
 	LogisticRegressionAlgorithm(0.1, data)
 }
