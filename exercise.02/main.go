@@ -14,10 +14,12 @@ import (
 )
 
 const (
-	dataDir   = "exercise.02.data"
-	exportDir = "exercise.02.notebook"
+	dataDir    = "exercise.02.data"
+	exportDir  = "exercise.02.notebook"
+	iterations = 100
 )
 
+// Export Struct for notebook graph generation
 type ExportModel struct {
 	Model       Model
 	ModelString string
@@ -25,6 +27,7 @@ type ExportModel struct {
 	YPoints     []float64
 }
 
+// Training data point
 type DataPoint struct {
 	Dimension1 float64
 	Dimension2 float64
@@ -33,13 +36,20 @@ type DataPoint struct {
 
 type DataPoints []DataPoint
 
+// Model: composed of three thetas (first bias)
 type Model []float64
 
+// Convert Model (thetas) in a function string
+// for debug purposes.
 func (model Model) str() string {
 	return fmt.Sprintf("y = (%f + %f * x)*(-1/(%f))",
 		model[0], model[1], model[2])
 }
 
+// Plot x and y values of Model in range from start to end.
+// Once your algorithm has estimated the correct vector
+// of parameters θ, you can plot such model using
+// the function x2 = (θ0 + θ1x1)(−1/θ2).
 func (model Model) plot(start, end float64) (xs []float64, ys []float64) {
 
 	for start < end {
@@ -55,6 +65,7 @@ func (model Model) plot(start, end float64) (xs []float64, ys []float64) {
 	return xs, ys
 }
 
+// Convert Model for export
 func (model Model) export() ExportModel {
 
 	xs, ys := model.plot(-3, 4)
@@ -69,11 +80,15 @@ func (model Model) export() ExportModel {
 	return export
 }
 
+// Sigmoid Function
 func sigmoidFunction(z float64) float64 {
 
 	return 1.0 / (1.0 + math.Pow(math.E, -z))
 }
 
+// Z function, output will be used for sigmoid function.
+// Use a linear model of the form z = θ0 + θ1x1 + θ2x2.
+// Don’t use a polynomial!
 func zFunction(model Model, x1, x2 float64) float64 {
 
 	bias := model[0]
@@ -83,42 +98,44 @@ func zFunction(model Model, x1, x2 float64) float64 {
 	return bias + part1 + part2
 }
 
-func eTheta(trainingPoints DataPoints, model Model) float64 {
+// Calculate error rate (Erms)
+func calculateError(data DataPoints, model Model) float64 {
 
 	eTheta := 0.0
 
-	for _, point := range trainingPoints {
+	for _, point := range data {
 		z := zFunction(model, point.Dimension1, point.Dimension2)
 		sigmoid := sigmoidFunction(z)
 
 		eTheta += math.Pow(sigmoid-float64(point.Label), float64(2))
 	}
 
-	return eTheta * 0.5
-}
-
-func calculateError(data DataPoints, model Model) float64 {
-	eTheta := eTheta(data, model)
+	eTheta = eTheta * 0.5
 	m := float64(len(data))
 	erms := math.Sqrt((2.0 * eTheta) / m)
 
 	return erms
 }
 
+// Logistic Regression Training Algorithm
 func LogisticRegressionAlgorithm(learnRate float64, data DataPoints) {
 
+	// (3) Initialize the parameters of your model
+	// with random values in the interval (−0.01, 0.01)
 	model := Model{
 		simple.RandFloat(-0.01, 0.01),
 		simple.RandFloat(-0.01, 0.01),
 		simple.RandFloat(-0.01, 0.01),
 	}
 
+	// Log and save init Model
 	log.Printf("Init model: %v\n", model.str())
 	simple.WritePretty(model.export(), exportDir+"/model.init.json")
 
+	// Error curve data
 	errorCurve := make([]float64, 0)
 
-	for count := 0; count < 100; count++ {
+	for count := 0; count < iterations; count++ {
 
 		for inx := range model {
 			for _, point := range data {
@@ -136,17 +153,21 @@ func LogisticRegressionAlgorithm(learnRate float64, data DataPoints) {
 					xij = point.Dimension2
 				}
 
+				// modify theta
 				model[inx] += learnRate * (float64(point.Label) - sigmoid) * xij
 			}
 		}
 
+		// calculate error for iteration
 		errorCurve = append(errorCurve, calculateError(data, model))
 	}
 
+	// Log and save final Model
 	log.Printf("Trained model: %v\n", model.str())
-
-	simple.WritePretty(errorCurve, exportDir+"/errorCurve.json")
 	simple.WritePretty(model.export(), exportDir+"/model.final.json")
+
+	// Save error curve.
+	simple.WritePretty(errorCurve, exportDir+"/errorCurve.json")
 }
 
 func main() {
