@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"math/rand"
+	"os"
 	"strconv"
 	"strings"
 
@@ -13,8 +14,16 @@ import (
 )
 
 const (
-	dataDir = "exercise.02.data"
+	dataDir   = "exercise.02.data"
+	exportDir = "exercise.02.notebook"
 )
+
+type ExportModel struct {
+	Model       Model
+	ModelString string
+	XPoints     []float64
+	YPoints     []float64
+}
 
 type DataPoint struct {
 	Dimension1 float64
@@ -27,19 +36,23 @@ type DataPoints []DataPoint
 type Model []float64
 
 func (model Model) Str() string {
+	return fmt.Sprintf("y = (%f + %f * x)*(-1/(%f))",
+		model[0], model[1], model[2])
+}
 
-	parts := make([]string, len(model))
+func (model Model) Plot(start, end float64) (xs []float64, ys []float64) {
 
-	for inx, theta := range model {
-		if inx == 0 {
-			parts[inx] = fmt.Sprint(theta)
-		} else {
-			parts[inx] = fmt.Sprintf("%f * x%d", theta, inx)
-		}
+	for start < end {
+		x := start
+		y := (model[0] + model[1]*x) * (-1.0 / (model[2]))
+
+		xs = append(xs, x)
+		ys = append(ys, y)
+
+		start += 0.1
 	}
 
-	// return "y = " + strings.Join(parts, " + ")
-	return fmt.Sprintf("y = (%f + %f * x)*(−1/(%f))", model[0], model[1], model[2])
+	return xs, ys
 }
 
 func sigmoidFunction(z float64) float64 {
@@ -56,7 +69,29 @@ func zFunction(model Model, x1, x2 float64) float64 {
 	return bias + part1 + part2
 }
 
-func LogisticRegressionAlgorithm(data DataPoints) {
+func eTheta(trainingPoints DataPoints, model Model) float64 {
+
+	eTheta := 0.0
+
+	for _, point := range trainingPoints {
+		z := zFunction(model, point.Dimension1, point.Dimension2)
+		sigmoid := sigmoidFunction(z)
+
+		eTheta += math.Pow(sigmoid-float64(point.Label), float64(2))
+	}
+
+	return eTheta * 0.5
+}
+
+func calculateError(data DataPoints, model Model) float64 {
+	eTheta := eTheta(data, model)
+	m := float64(len(data))
+	erms := math.Sqrt((2.0 * eTheta) / m)
+
+	return erms
+}
+
+func LogisticRegressionAlgorithm(learnRate float64, data DataPoints) {
 
 	model := Model{
 		simple.RandFloat(-0.01, 0.01),
@@ -66,10 +101,11 @@ func LogisticRegressionAlgorithm(data DataPoints) {
 
 	log.Printf("Init model: %v\n", model.Str())
 
+	errorCurve := make([]float64, 0)
+
 	for count := 0; count < 100; count++ {
 
 		for inx := range model {
-
 			for _, point := range data {
 
 				z := zFunction(model, point.Dimension1, point.Dimension2)
@@ -85,12 +121,27 @@ func LogisticRegressionAlgorithm(data DataPoints) {
 					xij = point.Dimension2
 				}
 
-				model[inx] += 0.05 * (float64(point.Label) - sigmoid) * xij
+				model[inx] += learnRate * (float64(point.Label) - sigmoid) * xij
 			}
 		}
+
+		errorCurve = append(errorCurve, calculateError(data, model))
 	}
 
 	log.Printf("Trained model: %v\n", model.Str())
+
+	xs, ys := model.Plot(-3, 4)
+
+	export := ExportModel{
+		Model:       model,
+		ModelString: model.Str(),
+		XPoints:     xs,
+		YPoints:     ys,
+	}
+
+	simple.WritePretty(errorCurve, exportDir+"/errorCurve.json")
+	simple.WritePretty(data, exportDir+"/trainingPoints.json")
+	simple.WritePretty(export, exportDir+"/model.json")
 }
 
 func main() {
@@ -101,6 +152,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	_ = os.MkdirAll(exportDir, 0755)
 
 	txt := string(byt)
 	txt = strings.TrimSpace(txt)
@@ -119,5 +172,5 @@ func main() {
 		data = append(data, point)
 	}
 
-	LogisticRegressionAlgorithm(data)
+	LogisticRegressionAlgorithm(0.1, data)
 }
