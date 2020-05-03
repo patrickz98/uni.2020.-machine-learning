@@ -44,7 +44,7 @@ func (model Model) Str() string {
 
 func sigmoidFunction(z float64) float64 {
 
-	return 1.0/1 + math.Pow(math.E, -z)
+	return 1.0 / (1.0 + math.Pow(math.E, -z))
 }
 
 func zFunction(model Model, x1, x2 float64) float64 {
@@ -70,8 +70,6 @@ func LogisticRegressionAlgorithm(data DataPoints) {
 
 		for inx := range model {
 
-			sum := 0.0
-
 			for _, point := range data {
 
 				z := zFunction(model, point.Dimension1, point.Dimension2)
@@ -87,10 +85,8 @@ func LogisticRegressionAlgorithm(data DataPoints) {
 					xij = point.Dimension2
 				}
 
-				sum -= (sigmoid - float64(point.Label)) * xij
+				model[inx] += 0.05 * (float64(point.Label) - sigmoid) * xij
 			}
-
-			model[inx] += 0.001 * sum
 		}
 	}
 
