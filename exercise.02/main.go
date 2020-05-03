@@ -35,12 +35,12 @@ type DataPoints []DataPoint
 
 type Model []float64
 
-func (model Model) Str() string {
+func (model Model) str() string {
 	return fmt.Sprintf("y = (%f + %f * x)*(-1/(%f))",
 		model[0], model[1], model[2])
 }
 
-func (model Model) Plot(start, end float64) (xs []float64, ys []float64) {
+func (model Model) plot(start, end float64) (xs []float64, ys []float64) {
 
 	for start < end {
 		x := start
@@ -53,6 +53,20 @@ func (model Model) Plot(start, end float64) (xs []float64, ys []float64) {
 	}
 
 	return xs, ys
+}
+
+func (model Model) export() ExportModel {
+
+	xs, ys := model.plot(-3, 4)
+
+	export := ExportModel{
+		Model:       model,
+		ModelString: model.str(),
+		XPoints:     xs,
+		YPoints:     ys,
+	}
+
+	return export
 }
 
 func sigmoidFunction(z float64) float64 {
@@ -99,7 +113,8 @@ func LogisticRegressionAlgorithm(learnRate float64, data DataPoints) {
 		simple.RandFloat(-0.01, 0.01),
 	}
 
-	log.Printf("Init model: %v\n", model.Str())
+	log.Printf("Init model: %v\n", model.str())
+	simple.WritePretty(model.export(), exportDir+"/model.init.json")
 
 	errorCurve := make([]float64, 0)
 
@@ -128,20 +143,11 @@ func LogisticRegressionAlgorithm(learnRate float64, data DataPoints) {
 		errorCurve = append(errorCurve, calculateError(data, model))
 	}
 
-	log.Printf("Trained model: %v\n", model.Str())
-
-	xs, ys := model.Plot(-3, 4)
-
-	export := ExportModel{
-		Model:       model,
-		ModelString: model.Str(),
-		XPoints:     xs,
-		YPoints:     ys,
-	}
+	log.Printf("Trained model: %v\n", model.str())
 
 	simple.WritePretty(errorCurve, exportDir+"/errorCurve.json")
 	simple.WritePretty(data, exportDir+"/trainingPoints.json")
-	simple.WritePretty(export, exportDir+"/model.json")
+	simple.WritePretty(model.export(), exportDir+"/model.final.json")
 }
 
 func main() {
