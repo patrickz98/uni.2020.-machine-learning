@@ -19,7 +19,7 @@ const (
 	iterations = 100
 )
 
-// Export Struct for notebook graph generation
+// Export struct for notebook graph generation
 type ExportModel struct {
 	Model       Model
 	ModelString string
@@ -46,7 +46,7 @@ func (model Model) str() string {
 		model[0], model[1], model[2])
 }
 
-// Plot x and y values of Model in range from start to end.
+// Plot x and y values for a Model in range from start to end.
 // Once your algorithm has estimated the correct vector
 // of parameters θ, you can plot such model using
 // the function x2 = (θ0 + θ1x1)(−1/θ2).
