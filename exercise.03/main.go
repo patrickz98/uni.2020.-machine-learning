@@ -12,6 +12,86 @@ const (
 	dataDir = "exercise.03.data"
 )
 
+type FloatMatrix [][]float64
+
+func (matrix FloatMatrix) Add(matrix2 FloatMatrix) FloatMatrix {
+
+	values := make(FloatMatrix, len(matrix))
+
+	for inx := 0; inx < len(matrix); inx++ {
+
+		values[inx] = matrix[inx]
+
+		for iny := 0; iny < len(matrix[inx]); iny++ {
+			values[inx][iny] += matrix2[inx][iny]
+		}
+	}
+
+	return values
+}
+
+type FloatMatrixs []FloatMatrix
+
+func (matrixs FloatMatrixs) Mean() FloatMatrix {
+
+	values := make(FloatMatrix, 0)
+
+	for _, matrix := range matrixs {
+
+		if len(values) == 0 {
+			values = make([][]float64, len(matrix))
+		}
+
+		for inx, row := range matrix {
+
+			if len(values[inx]) == 0 {
+				values[inx] = make([]float64, len(row))
+			}
+
+			for iny, val := range row {
+				values[inx][iny] += val
+			}
+		}
+	}
+
+	for inx := range values {
+		for iny, val := range values[inx] {
+			values[inx][iny] = val / float64(len(matrixs))
+		}
+	}
+
+	return values
+}
+
+type FloatVector []float64
+
+func (vector FloatVector) Subtract(vector2 FloatVector) FloatVector {
+
+	values := make(FloatVector, 0)
+
+	for inx := 0; inx < len(vector); inx++ {
+		values = append(values, vector[inx]-vector2[inx])
+	}
+
+	return values
+}
+
+func (vector FloatVector) MatrixProduct(vector2 FloatVector) FloatMatrix {
+
+	matrix := make(FloatMatrix, len(vector))
+
+	for inx := 0; inx < len(vector); inx++ {
+
+		matrix[inx] = make([]float64, len(vector2))
+
+		for iny := 0; iny < len(vector2); iny++ {
+			matrix[inx][iny] = vector[inx] * vector2[iny]
+		}
+	}
+
+	return matrix
+}
+
 type FeatureVector struct {
 	RedMin   int
 	GreenMin int
@@ -21,7 +101,43 @@ type FeatureVector struct {
 	BlueAvg  float64
 }
 
+func (vector FeatureVector) Values() FloatVector {
+
+	return []float64{
+		float64(vector.RedMin),
+		float64(vector.GreenMin),
+		float64(vector.BlueMin),
+		vector.RedAvg,
+		vector.GreenAvg,
+		vector.BlueAvg,
+	}
+}
+
 type FeatureVectors []FeatureVector
+
+func (vectors FeatureVectors) Mean() FeatureVector {
+
+	mean := FeatureVector{}
+
+	for _, vector := range vectors {
+		mean.RedMin += vector.RedMin
+		mean.GreenMin += vector.GreenMin
+		mean.BlueMin += vector.BlueMin
+
+		mean.RedAvg += vector.RedAvg
+		mean.GreenAvg += vector.GreenAvg
+		mean.BlueAvg += vector.BlueAvg
+	}
+
+	return FeatureVector{
+		RedMin:   mean.RedMin / len(vectors),
+		GreenMin: mean.GreenMin / len(vectors),
+		BlueMin:  mean.BlueMin / len(vectors),
+		RedAvg:   mean.RedAvg / float64(len(vectors)),
+		GreenAvg: mean.GreenAvg / float64(len(vectors)),
+		BlueAvg:  mean.BlueAvg / float64(len(vectors)),
+	}
+}
 
 type Pixel struct {
 	Red   int
@@ -39,15 +155,15 @@ func (pixels Pixels) ToVector() FeatureVector {
 	bmin := 0xff
 
 	for _, pixel := range pixels {
-		if rmin < pixel.Red {
+		if rmin > pixel.Red {
 			rmin = pixel.Red
 		}
 
-		if gmin < pixel.Green {
+		if gmin > pixel.Green {
 			gmin = pixel.Green
 		}
 
-		if bmin < pixel.Blue {
+		if bmin > pixel.Blue {
 			bmin = pixel.Blue
 		}
 	}
@@ -150,6 +266,41 @@ func readExamples(name string) FeatureVectors {
 	return featureVectors
 }
 
+func GaussianDiscriminantAnalysis(positives, negatives FeatureVectors) {
+
+	positivesLen := len(positives)
+	negativesLen := len(negatives)
+	phi := float64(positivesLen) / float64(positivesLen+negativesLen)
+	fmt.Println("phi", phi)
+
+	positivesMean := positives.Mean()
+	fmt.Println("positivesMean", positivesMean)
+
+	negativesMean := negatives.Mean()
+	fmt.Println("negativesMean", negativesMean)
+
+	coffSum := make(FloatMatrixs, 0)
+
+	for _, feature := range positives {
+		vectorX := feature.Values()
+		vectorY := positivesMean.Values()
+
+		xxx := vectorX.Subtract(vectorY)
+		coffSum = append(coffSum, xxx.MatrixProduct(xxx))
+	}
+
+	for _, feature := range negatives {
+		vectorX := feature.Values()
+		vectorY := negativesMean.Values()
+
+		xxx := vectorX.Subtract(vectorY)
+		coffSum = append(coffSum, xxx.MatrixProduct(xxx))
+	}
+
+	coff := coffSum.Mean()
+	fmt.Println("coff", coff)
+}
+
 func main() {
 
 	negatives := readExamples("negatives")
@@ -157,4 +308,6 @@ func main() {
 
 	fmt.Println(negatives)
 	fmt.Println(positives)
+
+	GaussianDiscriminantAnalysis(positives, negatives)
 }
