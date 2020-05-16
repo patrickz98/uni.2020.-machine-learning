@@ -5,12 +5,12 @@ import math
 import skimage.io
 import matplotlib.pyplot as plt
 import numpy as np
+from typing import List, Set, Dict, Tuple, Optional
 
 dataDir = "../exercise.03.data"
 
 
 def img_to_feature_vector(img: np.ndarray) -> np.ndarray:
-
     red_min = np.min(img[:, :, 0])
     green_min = np.min(img[:, :, 1])
     blue_min = np.min(img[:, :, 2])
@@ -32,7 +32,6 @@ def img_to_feature_vector(img: np.ndarray) -> np.ndarray:
 
 
 def mean_for_feature_vectors(vectors: [np.array]) -> np.array:
-
     feature_sum = np.zeros((6,))
 
     for vector in vectors:
@@ -41,8 +40,7 @@ def mean_for_feature_vectors(vectors: [np.array]) -> np.array:
     return feature_sum / len(vectors)
 
 
-def calculate_feature_vectors(src: str) -> [np.array]:
-
+def calculate_feature_vectors(src: str) -> List[np.array]:
     vectors = []
 
     source = dataDir + "/" + src
@@ -52,7 +50,7 @@ def calculate_feature_vectors(src: str) -> [np.array]:
             continue
 
         path = source + "/" + file
-        #print(path)
+        # print(path)
 
         img = skimage.io.imread(path)
         feature_vector = img_to_feature_vector(img)
@@ -62,8 +60,27 @@ def calculate_feature_vectors(src: str) -> [np.array]:
     return vectors
 
 
-def main():
+def probability(x: np.array, y: np.array, coefficient_matrix: np.array) -> float:
 
+    n = len(x)
+
+    print("n", n)
+    print("x", x)
+    print("reshape", x.reshape(-1, 1))
+
+    # Initialize and reshape
+    X = x.reshape(-1, 1)
+    MU = y.reshape(-1, 1)
+    p, _ = coefficient_matrix.shape
+
+    SIGMA_inv = np.linalg.inv(coefficient_matrix)
+    denominator = np.sqrt((2 * np.pi) ** (n / 2) * np.linalg.det(coefficient_matrix) ** (1 / 2))
+    exponent = -(1 / 2) * ((X - MU).T @ SIGMA_inv @ (X - MU))
+
+    return float((1. / denominator) * np.exp(exponent))
+
+
+def main():
     negatives = calculate_feature_vectors("negatives")
     negative_mean = mean_for_feature_vectors(negatives)
     print("negative_mean", negative_mean)
@@ -73,9 +90,30 @@ def main():
     print("positives_mean", positives_mean)
 
     coefficient_matrix = np.zeros((6, 6))
+    print(coefficient_matrix)
 
     for pos in positives:
-        coefficient_matrix += pos * pos
+        defuck = np.array([pos - positives_mean])
+        coefficient_matrix += defuck * np.transpose(defuck)
+
+    for neg in negatives:
+        defuck = np.array([neg - negative_mean])
+        coefficient_matrix += defuck * np.transpose(defuck)
+
+    coefficient_matrix = coefficient_matrix / (len(negatives) + len(positives))
+    print("coefficient_matrix", coefficient_matrix)
+    print("det", np.linalg.det(coefficient_matrix))
+
+    #img = skimage.io.imread(dataDir + "/positives/p02.png")
+    img = skimage.io.imread(dataDir + "/negatives/n01.png")
+    feature_vector = img_to_feature_vector(img)
+
+    p_x_equals_y = probability(feature_vector, positives_mean, coefficient_matrix)
+    p_x_not_equals_y = probability(feature_vector, negative_mean, coefficient_matrix)
+    print("p_x_equals_y", "{:.20f}".format(p_x_equals_y))
+
+    prob = (p_x_equals_y * 0.5) / (p_x_not_equals_y * 0.5 + p_x_equals_y * 0.5)
+    print("probability", "{:.20f}".format(prob))
 
 
 if __name__ == "__main__":
