@@ -61,18 +61,17 @@ def calculate_feature_vectors(src: str) -> List[np.array]:
     return vectors
 
 
-def probability(x: np.array, y: np.array, coefficient_matrix: np.array) -> float:
+def probability(x: np.array, mean: np.array, coefficient_matrix: np.array) -> float:
 
     n = len(x)
 
-    # Initialize and reshape
-    X = x.reshape(-1, 1)
-    MU = y.reshape(-1, 1)
+    x = x.reshape(-1, 1)
+    mean = mean.reshape(-1, 1)
     p, _ = coefficient_matrix.shape
 
-    SIGMA_inv = np.linalg.inv(coefficient_matrix)
+    sigma_inv = np.linalg.inv(coefficient_matrix)
     denominator = np.sqrt((2 * np.pi) ** (n / 2) * np.linalg.det(coefficient_matrix) ** (1 / 2))
-    exponent = -(1 / 2) * ((X - MU).T @ SIGMA_inv @ (X - MU))
+    exponent = -(1 / 2) * ((x - mean).T @ sigma_inv @ (x - mean))
 
     return float((1. / denominator) * np.exp(exponent))
 
@@ -112,7 +111,7 @@ def main():
         coefficient_matrix += defuck * np.transpose(defuck)
 
     coefficient_matrix = coefficient_matrix / (len(negatives) + len(positives))
-    # print("coefficient_matrix", coefficient_matrix)
+    print("coefficient_matrix", coefficient_matrix)
     # print("det", np.linalg.det(coefficient_matrix))
 
     img = dataDir + "/negatives/n01.png"
