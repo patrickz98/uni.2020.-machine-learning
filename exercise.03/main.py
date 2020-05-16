@@ -10,6 +10,7 @@ from typing import List, Set, Dict, Tuple, Optional
 dataDir = "../exercise.03.data"
 
 
+# For each one of the 60 images obtain a feature vector.
 def img_to_feature_vector(img: np.ndarray) -> np.ndarray:
     red_min = np.min(img[:, :, 0])
     green_min = np.min(img[:, :, 1])
@@ -64,10 +65,6 @@ def probability(x: np.array, y: np.array, coefficient_matrix: np.array) -> float
 
     n = len(x)
 
-    print("n", n)
-    print("x", x)
-    print("reshape", x.reshape(-1, 1))
-
     # Initialize and reshape
     X = x.reshape(-1, 1)
     MU = y.reshape(-1, 1)
@@ -80,6 +77,21 @@ def probability(x: np.array, y: np.array, coefficient_matrix: np.array) -> float
     return float((1. / denominator) * np.exp(exponent))
 
 
+def classify_image(path: str, pos_mean: np.array, neg_mean: np.array, coefficient_matrix: np.array):
+
+    img = skimage.io.imread(path)
+    feature_vector = img_to_feature_vector(img)
+
+    p_x_equals_y = probability(feature_vector, pos_mean, coefficient_matrix)
+    p_x_not_equals_y = probability(feature_vector, neg_mean, coefficient_matrix)
+
+    prob = (p_x_equals_y * 0.5) / (p_x_not_equals_y * 0.5 + p_x_equals_y * 0.5)
+
+    print("Probability for having a Chagas parasites:    ", "{:.20f}".format(prob))
+    print("Probability for NOT having a Chagas parasites:", "{:.20f}".format(1.0 - prob))
+
+
+# Estimate the parameters of your Gaussian discriminat classifier
 def main():
     negatives = calculate_feature_vectors("negatives")
     negative_mean = mean_for_feature_vectors(negatives)
@@ -90,7 +102,6 @@ def main():
     print("positives_mean", positives_mean)
 
     coefficient_matrix = np.zeros((6, 6))
-    print(coefficient_matrix)
 
     for pos in positives:
         defuck = np.array([pos - positives_mean])
@@ -101,19 +112,16 @@ def main():
         coefficient_matrix += defuck * np.transpose(defuck)
 
     coefficient_matrix = coefficient_matrix / (len(negatives) + len(positives))
-    print("coefficient_matrix", coefficient_matrix)
-    print("det", np.linalg.det(coefficient_matrix))
+    # print("coefficient_matrix", coefficient_matrix)
+    # print("det", np.linalg.det(coefficient_matrix))
 
-    #img = skimage.io.imread(dataDir + "/positives/p02.png")
-    img = skimage.io.imread(dataDir + "/negatives/n01.png")
-    feature_vector = img_to_feature_vector(img)
+    img = dataDir + "/negatives/n01.png"
+    print("Negative Example:", img)
+    classify_image(img, positives_mean, negative_mean, coefficient_matrix)
 
-    p_x_equals_y = probability(feature_vector, positives_mean, coefficient_matrix)
-    p_x_not_equals_y = probability(feature_vector, negative_mean, coefficient_matrix)
-    print("p_x_equals_y", "{:.20f}".format(p_x_equals_y))
-
-    prob = (p_x_equals_y * 0.5) / (p_x_not_equals_y * 0.5 + p_x_equals_y * 0.5)
-    print("probability", "{:.20f}".format(prob))
+    img = dataDir + "/positives/p12.png"
+    print("Positive Example:", img)
+    classify_image(img, positives_mean, negative_mean, coefficient_matrix)
 
 
 if __name__ == "__main__":
