@@ -20,6 +20,7 @@ def img_to_feature_vector(img: np.ndarray) -> Dict:
     blue_mean = np.mean(img[:, :, 2])
 
     return {
+        0: 1,
         1: red_min,
         2: green_min,
         3: blue_min,
@@ -52,7 +53,7 @@ def main():
     positives_all = calculate_feature_vectors("positives")
     negatives_all = calculate_feature_vectors("negatives")
 
-    test_batch_size = 1
+    test_batch_size = 5
 
     # Use the excludes for testing.
     test_features_pos = positives_all[-test_batch_size:]
@@ -82,9 +83,10 @@ def main():
     # print("features.len", len(features))
 
     print("------------- svm_train -------------")
-    # model = svm_train(labels, features, '-t 2 -d 2 -g 0.001 -c 0.01')
-    model = svm_train(labels, features, '-t 1 -d 1')
-    # model = svm_train(labels, features, '-c 4')
+    model = svm_train(labels, features, '-t 0 -d 1')
+    # model = svm_train(labels, features, '-t 1 -d 1')
+    # model = svm_train(labels, features, '-t 2 -d 1 -g 0.001 -c 0.01')
+    # model = svm_train(labels, features, '-t 3 -g 0.00001')
 
     print("------------- svm_predict -------------")
     p_label, p_acc, p_val = svm_predict(test_labels, test_features, model)
@@ -92,5 +94,6 @@ def main():
     print("p_label", p_label)
     print("p_acc", p_acc)
     print("p_val", p_val)
+
 
 main()
