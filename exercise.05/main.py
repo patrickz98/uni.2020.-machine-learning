@@ -57,7 +57,8 @@ def show_classifier(classifier: (int, int)):
     else:
         plt.axhline(classifier[1])
 
-    plt.show()
+    # plt.show()
+    plt.savefig("classifier.png", dpi=400)
 
 
 def main():
@@ -70,6 +71,7 @@ def main():
 
     show_classifier(classifier[17])
     print("error", error(classifier[17]))
+    print("weight_based_on_error", weight_based_on_error(error(classifier[17])))
 
     # plt.figure(0)
     # for cl in classifier:
