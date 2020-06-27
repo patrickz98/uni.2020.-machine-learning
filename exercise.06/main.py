@@ -1,5 +1,6 @@
 import math
 import random
+from typing import List
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -11,21 +12,33 @@ def normal_distribution(x: float, mean: float, variance: float) -> float:
     return pi_part * math.exp(exponent)
 
 
-x_points = []
-y_points = []
+def generate_distribution(width: float, mean: float, variance: float) -> List[float]:
+    points = []
 
-for x in np.arange(-10, 10, 0.01):
-    prop = normal_distribution(x, 0, 1)
+    while len(points) < 100:
+        x = random.uniform(-width, width)
+        prop = normal_distribution(x, mean, variance)
 
-    print("x", x)
-    print("prop", prop)
-    # print("random", random.uniform(0, 0.4))
+        if random.random() < prop:
+            points.append(x)
 
-    if random.random() < prop:
-        x_points.append(x)
-        y_points.append(prop)
+    return points
+
+
+def generate_distribution_points(center: (float, float), variance: (float, float)) -> (List[float], List[float]):
+    x_points = generate_distribution(8, center[0], variance[0])
+    y_points = generate_distribution(8, center[1], variance[1])
+
+    return x_points, y_points
+
+
+random.seed(19980528)
+x_points_1, y_points_1 = generate_distribution_points((5, -5), (1.3, 0.9))
+x_points_2, y_points_2 = generate_distribution_points((-5, 2), (1.4, 1.4))
+x_points_3, y_points_3 = generate_distribution_points((0, 6),  (1.0, 0.8))
 
 plt.figure(0)
-# plt.plot(x_points, y_points)
-plt.scatter(x_points, y_points)
-plt.savefig("ml.exercise.06.01.png", dpi=400)
+plt.scatter(x_points_1, y_points_1)
+plt.scatter(x_points_2, y_points_2)
+plt.scatter(x_points_3, y_points_3)
+plt.savefig("ml.exercise.06.01.png", dpi=300)
