@@ -90,7 +90,6 @@ plt.scatter(x_points_2, y_points_2)
 plt.scatter(x_points_3, y_points_3)
 # plt.savefig("ml.exercise.06.01.png", dpi=300)
 
-
 training_data = []
 
 for inx, iny in zip(x_points_1, y_points_1):
@@ -105,5 +104,6 @@ for inx, iny in zip(x_points_3, y_points_3):
 centroids = k_mean(3, training_data)
 
 for centroid in centroids:
-    plt.scatter(centroid[0], centroid[1])
+    plt.scatter(centroid[0], centroid[1], marker="x")
+
 plt.savefig("ml.exercise.06.01.png", dpi=300)
