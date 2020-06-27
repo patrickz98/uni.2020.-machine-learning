@@ -37,47 +37,52 @@ def k_mean(k: int, training_data: List[Tuple[float, float, int]]) -> List[Tuple[
     c_values = []
 
     for _ in range(k):
-        x = random.uniform(-5, 5)
-        y = random.uniform(-5, 5)
+        x = random.uniform(-10, 10)
+        y = random.uniform(-10, 10)
         centroids.append((x, y))
         c_values.append([])
 
-    for inx in range(len(training_data)):
-        x = training_data[inx]
-        best_distance = -1
-        best_centroid = -1
+    for _ in range(1000):
+        for inx in range(len(training_data)):
+            x = training_data[inx]
+            best_distance = -1
+            best_centroid = -1
 
-        for iny in range(k):
-            centroid = centroids[iny]
-            distance = (x[0] - centroid[0]) ** 2 + (x[1] - centroid[1]) ** 2
+            for iny in range(k):
+                centroid = centroids[iny]
+                distance = (x[0] - centroid[0]) ** 2 + (x[1] - centroid[1]) ** 2
 
-            if best_distance < 0 or best_distance > distance:
-                best_distance = distance
-                best_centroid = iny
+                # print(iny, "distance", distance)
 
-        c_values[best_centroid].append(x)
+                if best_distance < 0 or best_distance > distance:
+                    best_distance = distance
+                    best_centroid = iny
 
-    print(c_values)
+            c_values[best_centroid].append(x)
 
-    for inx in range(k):
-        x_sum = 0
-        y_sum = 0
+        for inx in range(k):
+            x_sum = 0
+            y_sum = 0
 
-        count = len(c_values[inx])
+            count = len(c_values[inx])
 
-        for x in c_values[inx]:
-            x_sum += x[0]
-            y_sum += x[1]
+            if count <= 0:
+                continue
 
-        centroids[inx] = (x_sum / count, y_sum / count)
+            for x in c_values[inx]:
+                x_sum += x[0]
+                y_sum += x[1]
+
+            centroids[inx] = (x_sum / count, y_sum / count)
+            c_values[inx] = []
 
     return centroids
 
 
 random.seed(19980528)
-x_points_1, y_points_1 = generate_distribution_points((5, -5), (0.9, 0.9))
-x_points_2, y_points_2 = generate_distribution_points((-5, 2), (1.4, 1.4))
-x_points_3, y_points_3 = generate_distribution_points((0, 5), (0.8, 0.8))
+x_points_1, y_points_1 = generate_distribution_points((8, 8), (1.9, 1.9))
+x_points_2, y_points_2 = generate_distribution_points((-6, -3), (1.4, 2.4))
+x_points_3, y_points_3 = generate_distribution_points((4, -4), (2.8, 1.8))
 
 plt.figure(0)
 plt.scatter(x_points_1, y_points_1)
@@ -94,7 +99,7 @@ for inx, iny in zip(x_points_1, y_points_1):
 for inx, iny in zip(x_points_2, y_points_2):
     training_data.append((inx, iny, 1))
 
-for inx, iny in zip(x_points_1, y_points_1):
+for inx, iny in zip(x_points_3, y_points_3):
     training_data.append((inx, iny, 2))
 
 centroids = k_mean(3, training_data)
