@@ -11,10 +11,19 @@ def normal_distribution(x: float, mean: float, variance: float) -> float:
     return pi_part * math.exp(exponent)
 
 
-x_points = [random.uniform(-5, 5) for x in range(20)]
-x_points.sort()
+x_points = []
+y_points = []
 
-y_points = [normal_distribution(x, 0, 1) for x in x_points]
+for x in np.arange(-10, 10, 0.01):
+    prop = normal_distribution(x, 0, 1)
+
+    print("x", x)
+    print("prop", prop)
+    # print("random", random.uniform(0, 0.4))
+
+    if random.random() < prop:
+        x_points.append(x)
+        y_points.append(prop)
 
 plt.figure(0)
 # plt.plot(x_points, y_points)
