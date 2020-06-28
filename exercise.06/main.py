@@ -83,7 +83,7 @@ def k_mean(k: int, training_data: List[Tuple[float, float, int]]) -> List[Tuple[
     return centroids
 
 
-def em(k: int, training_data: List[Tuple[float, float, int]]) -> List[Tuple[float, float]]:
+def em(k: int, training_data: List[Tuple[float, float, int]]):
     mean_c = []
     sig_c = []
     pi_c = []
@@ -157,15 +157,26 @@ def em(k: int, training_data: List[Tuple[float, float, int]]) -> List[Tuple[floa
     for c in range(k):
         for i in range(len(training_data)):
             x = training_data[i]
-            max_mean_c[c][0] = r_ic[i][c] * x[0]
-            max_mean_c[c][1] = r_ic[i][c] * x[1]
+            max_mean_c[c][0] += r_ic[i][c] * x[0]
+            max_mean_c[c][1] += r_ic[i][c] * x[1]
 
         max_mean_c[c][0] *= (1 / mc[c][0])
         max_mean_c[c][1] *= (1 / mc[c][1])
 
     print(max_mean_c)
 
-    return max_mean_c
+    max_sig = [[0.0, 0.0] for _ in range(k)]
+
+    for c in range(k):
+        for i in range(len(training_data)):
+            x = training_data[i]
+            max_sig[c][0] += r_ic[i][c] * (x[0] - max_mean_c[c][0]) ** 2
+            max_sig[c][1] += r_ic[i][c] * (x[1] - max_mean_c[c][1]) ** 2
+
+        max_sig[c][0] *= 1 / mc[c][0]
+        max_sig[c][1] *= 1 / mc[c][1]
+
+    return max_mean_c, max_sig
 
 
 random.seed(19980528)
@@ -191,10 +202,12 @@ for inx, iny in zip(x_points_3, y_points_3):
     training_data.append((inx, iny, 2))
 
 # centroids = k_mean(3, training_data)
-centroids = em(3, training_data)
+centroids, sig = em(3, training_data)
 
 for centroid in centroids:
     plt.scatter(centroid[0], centroid[1], marker="x")
 
 plt.savefig("ml.exercise.06.01.png", dpi=300)
 
+print("centroids", centroids)
+print("sig", sig)
