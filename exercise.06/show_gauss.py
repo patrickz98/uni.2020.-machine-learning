@@ -29,13 +29,13 @@ def normal_distribution(x: np.array, pi: float, mean: float, variance: float) ->
     return pi_part * np.exp(exponent)
 
 
-def normal_distribution_2(x: np.array):
-    mean = np.array([-1.9627000753720651, -0.6402175481784353])
+def normal_distribution_2(x: np.array, mean: np.array, cov: np.array):
+    # mean = np.array([-1.9627000753720651, -0.6402175481784353])
     # sig = np.array([2, 1])
     # cov = np.array([[1.0, -1.0],
     #                 [0.0, 2.0]])
-    cov = np.array([[4.56755595, 0.0],
-                    [0.0, 1.77421897]])
+    # cov = np.array([[4.56755595, 0.0],
+    #                 [0.0, 1.77421897]])
 
     cov_inv = np.linalg.inv(cov)
     # cov_det = np.linalg.det(cov)
@@ -61,14 +61,17 @@ def normal_distribution_2(x: np.array):
 def f(x, y):
     data = np.zeros((len(x), len(x)))
 
-    # data[:, :, 0] = x
-    # data[:, :, 1] = y
+    mean = np.array([0, 0])
+    cov = np.array([1, 0],
+                   [0, 1])
 
     for inx in range(len(x)):
         for iny in range(len(x)):
-            data[inx][iny] = normal_distribution_2(np.array([x[inx][iny], y[inx][iny]]))
+            x_val = np.array([x[inx][iny], y[inx][iny]])
+            data[inx][iny] = normal_distribution_2(x_val, mean, cov)
 
-    # print("data", data)
+    # print("x", x)
+    # print("y", y)
 
     # print("normal_distribution(x, 1, 0, 1)", normal_distribution(x, 1, 0, 1))
 
@@ -84,8 +87,7 @@ plt.figure(0)
 plt.contourf(X, Y, Z, 100)
 plt.show()
 
-print("normal_distribution_2([0, 0])")
-print(normal_distribution_2(np.array([0, 0])))
-print("normal_distribution_2([1, 0])")
-print(normal_distribution_2(np.array([1, 0])))
-# print("normal_distribution_2([0, 0])", np.mean(normal_distribution_2(np.array([1, 0]))))
+# print("normal_distribution_2([0, 0])")
+# print(normal_distribution_2(np.array([0, 0])))
+# print("normal_distribution_2([1, 0])")
+# print(normal_distribution_2(np.array([1, 0])))
