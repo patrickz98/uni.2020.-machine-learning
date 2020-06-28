@@ -30,18 +30,32 @@ def normal_distribution(x: np.array, pi: float, mean: float, variance: float) ->
 
 
 def normal_distribution_2(x: np.array):
-    # mean = np.array([0, 0])
-    # sig = np.array([[0.5, 1.5], [0.1, 1.6]])
-    mean = np.array([2.3338281687488074, -0.08093649607381477])
-    sig = np.array([[29.313368698570045, 23.845319805965087], [23.845319805965087, 29.313368698570045]])
+    mean = np.array([-1.9627000753720651, -0.6402175481784353])
+    # sig = np.array([2, 1])
+    # cov = np.array([[1.0, -1.0],
+    #                 [0.0, 2.0]])
+    cov = np.array([[4.56755595, 0.0],
+                    [0.0, 1.77421897]])
 
-    sig_inv = np.linalg.inv(sig)
-    sig_det = np.linalg.det(sig)
+    cov_inv = np.linalg.inv(cov)
+    # cov_det = np.linalg.det(cov)
 
-    exponent = -0.5 * np.transpose(x - mean) * sig * (x - mean)
+    exponent = np.transpose(x - mean) @ cov_inv @ (x - mean)
+    # exponent = (((x[0] - mean[0]) ** 2) / sig[0]) + (((x[1] - mean[1]) ** 2) / sig[1])
 
-    # return np.exp(exponent) / (math.sqrt((2 * math.pi) ** 2) * sig_det)
-    return np.exp(exponent)
+    # xx = x[0] - mean[0]
+    # yy = x[1] - mean[1]
+    #
+    # exponent = (cov[0, 0] * (xx ** 2)) + (2 * cov[0, 1] * xx ** yy) + (cov[1, 1] * (yy ** 2))
+    # exponent = np.sum(((x - mean) ** 2) / sig)
+
+    print("x", x)
+    print("exponent", exponent)
+
+    result = math.exp(-exponent)
+    print("result", result)
+
+    return result
 
 
 def f(x, y):
@@ -52,7 +66,7 @@ def f(x, y):
 
     for inx in range(len(x)):
         for iny in range(len(x)):
-            data[inx][iny] = np.mean(normal_distribution_2(np.array([x[inx][iny], y[inx][iny]])))
+            data[inx][iny] = normal_distribution_2(np.array([x[inx][iny], y[inx][iny]]))
 
     # print("data", data)
 
@@ -67,16 +81,7 @@ Z = f(X, Y)
 
 # Create a surface plot and projected filled contour plot under it.
 plt.figure(0)
-# ax = fig.gca(projection='3d')
-# ax.plot_surface(X, Y, Z, rstride=3, cstride=3, linewidth=1, antialiased=True,cmap=cm.viridis)
-
-plt.contourf(X, Y, Z, 20)
-
-# Adjust the limits, ticks and view angle
-# ax.set_zlim(-0.15, 0.2)
-# ax.set_zticks(np.linspace(0, 0.2, 5))
-# ax.view_init(27, -21)
-
+plt.contourf(X, Y, Z, 100)
 plt.show()
 
 print("normal_distribution_2([0, 0])")
