@@ -10,14 +10,10 @@ X = np.linspace(-10, 10, N)
 Y = np.linspace(-10, 10, N)
 X, Y = np.meshgrid(X, Y)
 
-# Mean vector and covariance matrix
-mu = np.array([0., 1.])
-Sigma = np.array([[1., 1.], [1., 1.]])
 
-# Pack X and Y into a single 3-dimensional array
-pos = np.empty(X.shape + (2,))
-pos[:, :, 0] = X
-pos[:, :, 1] = Y
+# Mean vector and covariance matrix
+# mu = np.array([0., 1.])
+# Sigma = np.array([[1., 1.], [1., 1.]])
 
 
 def normal_distribution(x: np.array, pi: float, mean: float, variance: float) -> float:
@@ -58,12 +54,12 @@ def normal_distribution_2(x: np.array, mean: np.array, cov: np.array):
     return result
 
 
-def f(x, y):
+def f(x, y, mean: np.array, cov: np.array):
     data = np.zeros((len(x), len(x)))
 
-    mean = np.array([0, 0])
-    cov = np.array([1, 0],
-                   [0, 1])
+    # mean = np.array([0, 0])
+    # cov = np.array([1, 0],
+    #                [0, 1])
 
     for inx in range(len(x)):
         for iny in range(len(x)):
@@ -80,14 +76,18 @@ def f(x, y):
     return data
 
 
-Z = f(X, Y)
+def show_gaussian_shit(means: np.array, covs: np.array):
+    N = 60
+    X = np.linspace(-10, 10, N)
+    Y = np.linspace(-10, 10, N)
+    X, Y = np.meshgrid(X, Y)
 
-# Create a surface plot and projected filled contour plot under it.
-plt.figure(0)
-plt.contourf(X, Y, Z, 100)
-plt.show()
+    for c in range(len(means)):
+        mean = means[c]
+        cov = covs[c]
 
-# print("normal_distribution_2([0, 0])")
-# print(normal_distribution_2(np.array([0, 0])))
-# print("normal_distribution_2([1, 0])")
-# print(normal_distribution_2(np.array([1, 0])))
+        Z = f(X, Y, mean, cov)
+
+        plt.figure(0)
+        plt.contourf(X, Y, Z, 100)
+        plt.savefig("ml.exercise.06.gaussian.png", dpi=300)
