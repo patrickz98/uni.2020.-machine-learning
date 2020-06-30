@@ -19,16 +19,13 @@ def f(x, y, mean: np.array, cov: np.array):
     return data
 
 
-def show_gaussian_shit(means: np.array, covs: np.array):
+def show_gaussian(plt, means: np.array, covs: np.array):
     N = 60
     X = np.linspace(-10, 10, N)
     Y = np.linspace(-10, 10, N)
     X, Y = np.meshgrid(X, Y)
 
     heatmap = np.zeros((len(X), len(Y)))
-
-    plt.figure(1)
-
     for c in range(len(means)):
         mean = means[c]
         cov = covs[c]
@@ -37,9 +34,7 @@ def show_gaussian_shit(means: np.array, covs: np.array):
 
         plt.plot(mean[0], mean[1], "x")
 
-    plt.contourf(X, Y, heatmap, 100)
-
-    plt.savefig(f"ml.exercise.06.gaussian.png", dpi=300)
+    plt.contour(X, Y, heatmap)
 
 
 def normal_distribution(x: np.array, mean: np.array, cov: np.array):
@@ -101,69 +96,6 @@ def k_mean(k: int, training_data: np.array) -> List[Tuple[float, float]]:
     return centroids
 
 
-def em_uni(k: int, training_data: np.array):
-    mean_c = np.zeros((k, 2))
-    cov_c = []
-
-    for c in range(k):
-        mean_x = random.uniform(-10, 10)
-        mean_y = random.uniform(-10, 10)
-        mean_c[c] = np.array([mean_x, mean_y])
-
-        cov = np.zeros((2, 2))
-        cov[0, 0] = random.uniform(0.1, 3)
-        cov[1, 1] = random.uniform(0.1, 3)
-        cov_c.append(cov)
-
-    m = training_data.shape[0]
-
-    for _ in range(1):
-        w_ij = np.zeros((m, k))
-        w_sum = np.zeros((k, 1))
-
-        for i in range(m):
-            x = training_data[i]
-            for c in range(k):
-                p = normal_distribution(x, mean_c[c], cov_c[c])
-                w_ij[i, c] = p
-                w_sum[c] += p
-
-        max_weight = np.zeros((k, 1))
-
-        for c in range(k):
-            for i in range(m):
-                max_weight[c] += w_ij[i, c]
-
-            max_weight[c] /= m
-
-        mean_c = np.zeros((k, 2))
-
-        for c in range(k):
-            for i in range(m):
-                x = training_data[i]
-                mean_c[c] += w_ij[i, c] * x
-
-            mean_c[c] /= w_sum[c]
-
-        # print(mean_c)
-
-        cov_c = [np.zeros((2, 2)) for _ in range(k)]
-
-        for c in range(k):
-            for i in range(len(training_data)):
-                x = training_data[i]
-                cov_c[c] += w_ij[i, c] * (x - mean_c[c]) * np.transpose(x - mean_c[c])
-
-            cov_c[c] /= w_sum[c]
-            cov_c[c][0, 1] = 0
-            cov_c[c][1, 0] = 0
-
-            # print(f"cov_c[{c}]")
-            # print(cov_c[c])
-
-    return mean_c, cov_c
-
-
 def em(k: int, training_data: np.array):
     mean_c = np.zeros((k, 2))
     cov_c = []
@@ -180,7 +112,7 @@ def em(k: int, training_data: np.array):
 
     m = training_data.shape[0]
 
-    for _ in range(1):
+    for _ in range(100):
         r_ic = np.zeros((m, k))
 
         for i in range(m):
@@ -189,15 +121,11 @@ def em(k: int, training_data: np.array):
                 probability = normal_distribution(x, mean_c[c], cov_c[c])
                 r_ic[i, c] = probability
 
-            # r_ic[i] = r_ic[i] / np.sum(r_ic[i])
-            print(f"r_ic[{i}]")
-            print(r_ic[i])
+            r_ic[i] = r_ic[i] / np.sum(r_ic[i])
 
         mc = np.zeros((k, 1))
         for c in range(k):
             mc[c] = np.sum(r_ic[:, c])
-            print(f"mc[{c}]")
-            print(mc[c])
 
         mean_c = np.zeros((k, 2))
         for c in range(k):
@@ -208,10 +136,7 @@ def em(k: int, training_data: np.array):
                 x = training_data[i]
                 parts.append(r_ic[i, c] * x)
 
-            mean_c[c] = np.sum(parts) / mc[c]
-
-            # print(f"mean_c[{c}]")
-            # print(mean_c[c])
+            mean_c[c] = np.sum(parts, axis=0) / mc[c]
 
         for c in range(k):
             parts = []
@@ -221,11 +146,7 @@ def em(k: int, training_data: np.array):
                 xx = r_ic[i, c] * np.transpose([x - mean_c[c]]) * ([x - mean_c[c]])
                 parts.append(xx)
 
-            # print("parts", parts)
-            # print("np.sum", np.sum(parts, axis=0))
             cov_c[c] = (1 / mc[c]) * np.sum(parts, axis=0)
-            # cov_c[c][0, 1] = 0
-            # cov_c[c][1, 0] = 0
 
     return mean_c, cov_c
 
@@ -271,6 +192,7 @@ for inx in range(len(centroids)):
     plt.plot(centroid[0], centroid[1], "o")
 
 # plt.savefig("ml.exercise.06.k_mean.png", dpi=300)
-plt.savefig("ml.exercise.06.em.png", dpi=300)
+plt.savefig("ml.exercise.06.em.points.png", dpi=300)
 
-show_gaussian_shit(centroids, covs)
+show_gaussian(plt, centroids, covs)
+plt.savefig(f"ml.exercise.06.em.gaussian.png", dpi=300)
