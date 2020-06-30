@@ -175,23 +175,33 @@ def generate_training_data() -> (np.array, plt.axes, plt.figure, plt.axes):
 
 
 def run_k_mean():
+    print("##################### k_mean #####################")
+
     data, fig, ax = generate_training_data()
 
     k = 3
     centroids = k_mean(k, data)
 
     for centroid in centroids:
+        print(centroid)
         ax.plot(centroid[0], centroid[1], "o")
 
     fig.savefig("ml.exercise.06.k_mean.png", dpi=300)
 
 
 def run_gauss_em():
+    print("##################### gauss_em #####################")
+
     data, fig, ax = generate_training_data()
 
     k = 3
     centroids, covs = em(k, data)
-    fig.savefig("ml.exercise.06.em.points.png", dpi=300)
+
+    for c in range(k):
+        print("centroid", centroids[c])
+        print("cov", covs[c])
+
+    # fig.savefig("ml.exercise.06.em.points.png", dpi=300)
 
     show_gaussian(ax, centroids, covs)
     fig.savefig(f"ml.exercise.06.em.gaussian.png", dpi=300)
