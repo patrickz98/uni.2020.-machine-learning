@@ -25,19 +25,21 @@ def show_gaussian_shit(means: np.array, covs: np.array):
     Y = np.linspace(-10, 10, N)
     X, Y = np.meshgrid(X, Y)
 
+    heatmap = np.zeros((len(X), len(Y)))
+
     plt.figure(1)
 
     for c in range(len(means)):
         mean = means[c]
         cov = covs[c]
 
-        Z = f(X, Y, mean, cov)
+        heatmap += f(X, Y, mean, cov)
 
-        # plt.figure(0)
         plt.plot(mean[0], mean[1], "x")
-        plt.contourf(X, Y, Z, 100)
 
-    plt.savefig("ml.exercise.06.gaussian.png", dpi=300)
+    plt.contourf(X, Y, heatmap, 100)
+
+    plt.savefig(f"ml.exercise.06.gaussian.png", dpi=300)
 
 
 def normal_distribution(x: np.array, mean: np.array, cov: np.array):
@@ -178,23 +180,24 @@ def em(k: int, training_data: np.array):
 
     m = training_data.shape[0]
 
-    for _ in range(1000):
+    for _ in range(1):
         r_ic = np.zeros((m, k))
-        r_i_sum = np.zeros((m, 1))
 
         for i in range(m):
             x = training_data[i]
             for c in range(k):
-                p = normal_distribution(x, mean_c[c], cov_c[c])
-                r_ic[i, c] = p
+                probability = normal_distribution(x, mean_c[c], cov_c[c])
+                r_ic[i, c] = probability
 
-            r_i_sum[i] = np.sum(r_ic[i])
-
-        r_ic = r_ic / r_i_sum
+            # r_ic[i] = r_ic[i] / np.sum(r_ic[i])
+            print(f"r_ic[{i}]")
+            print(r_ic[i])
 
         mc = np.zeros((k, 1))
         for c in range(k):
             mc[c] = np.sum(r_ic[:, c])
+            print(f"mc[{c}]")
+            print(mc[c])
 
         mean_c = np.zeros((k, 2))
         for c in range(k):
