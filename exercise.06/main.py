@@ -20,21 +20,18 @@ def f(x, y, mean: np.array, cov: np.array):
 
 
 def show_gaussian(plt, means: np.array, covs: np.array):
-    N = 60
-    X = np.linspace(-10, 10, N)
-    Y = np.linspace(-10, 10, N)
-    X, Y = np.meshgrid(X, Y)
+    grid_x, gird_y = np.meshgrid(np.linspace(-3, 7, 60), np.linspace(-5, 6, 60))
 
-    heatmap = np.zeros((len(X), len(Y)))
+    heatmap = np.zeros((len(grid_x), len(gird_y)))
     for c in range(len(means)):
         mean = means[c]
         cov = covs[c]
 
-        heatmap += f(X, Y, mean, cov)
+        heatmap += f(grid_x, gird_y, mean, cov)
 
         plt.plot(mean[0], mean[1], "x")
 
-    plt.contour(X, Y, heatmap)
+    plt.contour(grid_x, gird_y, heatmap)
 
 
 def normal_distribution(x: np.array, mean: np.array, cov: np.array):
@@ -151,48 +148,57 @@ def em(k: int, training_data: np.array):
     return mean_c, cov_c
 
 
+def generate_training_data() -> (np.array, plt.axes, plt.figure, plt.axes):
+    mean1 = (0, 0)
+    cov1 = [[1.0, 0.5],
+            [0.5, 1.0]]
+    data1 = np.random.multivariate_normal(mean1, cov1, 100)
+
+    mean2 = (3, 4)
+    cov2 = [[1.0, -0.7],
+            [-0.7, 1.0]]
+    data2 = np.random.multivariate_normal(mean2, cov2, 100)
+
+    mean3 = (-2, 4)
+    cov3 = [[1.0, 0.9],
+            [0.9, 1.0]]
+    data3 = np.random.multivariate_normal(mean3, cov3, 100)
+
+    training_data = np.concatenate((data1, data2, data3))
+
+    fig, ax = plt.subplots()
+    ax.plot(data1[:, 0], data1[:, 1], "x")
+    ax.plot(data2[:, 0], data2[:, 1], "x")
+    ax.plot(data3[:, 0], data3[:, 1], "x")
+
+    return training_data, fig, ax
+
+
+def run_k_mean():
+    data, fig, ax = generate_training_data()
+
+    k = 3
+    centroids = k_mean(k, data)
+
+    for centroid in centroids:
+        ax.plot(centroid[0], centroid[1], "o")
+
+    fig.savefig("ml.exercise.06.k_mean.png", dpi=300)
+
+
+def run_gauss_em():
+    data, fig, ax = generate_training_data()
+
+    k = 3
+    centroids, covs = em(k, data)
+    fig.savefig("ml.exercise.06.em.points.png", dpi=300)
+
+    show_gaussian(ax, centroids, covs)
+    fig.savefig(f"ml.exercise.06.em.gaussian.png", dpi=300)
+
+
 random.seed(19980528)
+run_k_mean()
 
-mean1 = (0, 0)
-cov1 = [[1.0, 0.5],
-        [0.5, 1.0]]
-data1 = np.random.multivariate_normal(mean1, cov1, 100)
-
-mean2 = (3, 4)
-cov2 = [[1.0, -0.7],
-        [-0.7, 1.0]]
-data2 = np.random.multivariate_normal(mean2, cov2, 100)
-
-mean3 = (-2, 4)
-cov3 = [[1.0, 0.9],
-        [0.9, 1.0]]
-data3 = np.random.multivariate_normal(mean3, cov3, 100)
-
-# print("data1", data1)
-
-training_data = np.concatenate((data1, data2, data3))
-
-plt.figure(0)
-plt.plot(data1[:, 0], data1[:, 1], "x")
-plt.plot(data2[:, 0], data2[:, 1], 'x')
-plt.plot(data3[:, 0], data3[:, 1], 'x')
-
-# centroids = k_mean(3, training_data)
-centroids, covs = em(3, training_data)
-
-for inx in range(len(centroids)):
-    centroid = centroids[inx]
-    print(f"centroid[{inx}]")
-    print(centroid)
-
-    cov = covs[inx]
-    print(f"covs[{inx}]")
-    print(cov)
-
-    plt.plot(centroid[0], centroid[1], "o")
-
-# plt.savefig("ml.exercise.06.k_mean.png", dpi=300)
-plt.savefig("ml.exercise.06.em.points.png", dpi=300)
-
-show_gaussian(plt, centroids, covs)
-plt.savefig(f"ml.exercise.06.em.gaussian.png", dpi=300)
+random.seed(19980528)
+run_gauss_em()
