@@ -11,36 +11,21 @@ def normal_distribution(x: float, mean: float, varianz: float) -> float:
     return expo / pi
 
 
-def main():
-    np.random.seed(19980528)
-    random.seed(19980528)
-
-    # Number of actions
-    n = 10
-
-    # Epsilon
-    random_factor = 0.1
-
-    # Init stuff
-    iterations = 1000
-    q_init_means = np.random.normal(0, 1, n)
-    q_init_means.sort()
-
-    print("q_init_means", q_init_means)
-
+def bandit_algorithm(n: int, q_means: np.array, randomization: float) -> np.array:
     # Q(a) <- 0
     q_a = np.zeros((n, 1))
 
     # N(a) <- 0
     n_a = np.zeros((n, 1))
 
+    iterations = 1000
     plot = np.zeros((n, iterations))
 
     for x in range(iterations):
 
         action = -1
 
-        if random.random() > random_factor:
+        if random.random() > randomization:
 
             best_reward = -1
             for inx in range(n):
@@ -53,18 +38,41 @@ def main():
 
         n_a[action] += 1
 
-        reward = np.random.normal(q_init_means[action], 1, 1)[0]
+        reward = np.random.normal(q_means[action], 1, 1)[0]
         q_a[action] += (reward - q_a[action]) / n_a[action]
 
         for inx in range(n):
             plot[inx][x] = q_a[inx]
 
-    print("q_a", q_a)
-    plt.figure(0)
-    for inx in range(n):
-        plt.plot(plot[ inx ])
+    return q_a
 
-    plt.show()
+
+def main():
+    np.random.seed(19980528)
+    random.seed(19980528)
+
+    # Number of actions
+    n = 10
+
+    # Epsilon
+    randomization = 0.1
+
+    # Init stuff
+    q_means = np.random.normal(0, 1, n)
+    q_means.sort()
+
+    print("q_means", q_means)
+
+    rounds = 2000
+    q_average = np.zeros((n, rounds))
+
+    for inx in range(rounds):
+        q_average[:, inx] = bandit_algorithm(n, q_means, randomization).reshape((10))
+
+        if inx % 200 == 0:
+            print("t =", inx)
+
+    print("q_average", np.mean(q_average, axis=1))
 
 
 if __name__ == '__main__':
