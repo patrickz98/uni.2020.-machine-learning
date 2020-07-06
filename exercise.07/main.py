@@ -3,6 +3,8 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
+plays = 1000
+
 
 def normal_distribution(x: float, mean: float, varianz: float) -> float:
     pi = varianz * math.sqrt(2 * math.pi)
@@ -11,17 +13,16 @@ def normal_distribution(x: float, mean: float, varianz: float) -> float:
     return expo / pi
 
 
-def bandit_algorithm(n: int, q_means: np.array, randomization: float) -> np.array:
+def play_bandit(n: int, q_means: np.array, randomization: float) -> (np.array, np.array):
     # Q(a) <- 0
     q_a = np.zeros((n, 1))
 
     # N(a) <- 0
     n_a = np.zeros((n, 1))
 
-    iterations = 1000
-    plot = np.zeros((n, iterations))
+    plot = np.zeros((n, plays))
 
-    for x in range(iterations):
+    for x in range(plays):
 
         action = -1
 
@@ -44,7 +45,7 @@ def bandit_algorithm(n: int, q_means: np.array, randomization: float) -> np.arra
         for inx in range(n):
             plot[inx][x] = q_a[inx]
 
-    return q_a
+    return q_a, plot
 
 
 def main():
@@ -56,6 +57,8 @@ def main():
 
     # Epsilon
     randomization = 0.1
+    # randomization = 0.01
+    # randomization = 0.0
 
     # Init stuff
     q_means = np.random.normal(0, 1, n)
@@ -65,12 +68,26 @@ def main():
 
     rounds = 2000
     q_average = np.zeros((n, rounds))
+    q_plot = np.zeros((n, plays))
 
     for inx in range(rounds):
-        q_average[:, inx] = bandit_algorithm(n, q_means, randomization).reshape((10))
+        q_a, plot = play_bandit(n, q_means, randomization)
+        q_average[:, inx] = q_a.reshape(10)
+
+        q_plot += plot
 
         if inx % 200 == 0:
             print("t =", inx)
+
+    q_plot = np.divide(q_plot, rounds)
+
+    plt.figure(0)
+
+    for inx in range(n):
+        plt.plot(q_plot[inx], label="%1.2f" % q_means[inx])
+
+    plt.legend()
+    plt.savefig(f"ml.exercise.07.random-{randomization}.png", dpi=550)
 
     print("q_average", np.mean(q_average, axis=1))
 
