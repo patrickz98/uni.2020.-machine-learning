@@ -13,14 +13,15 @@ def normal_distribution(x: float, mean: float, varianz: float) -> float:
     return expo / pi
 
 
-def play_bandit(n: int, q_means: np.array, randomization: float) -> (np.array, np.array):
+def play_bandit(n: int, q_means: np.array, randomization: float) -> (np.array, np.array, np.array):
     # Q(a) <- 0
     q_a = np.zeros((n, 1))
 
     # N(a) <- 0
     n_a = np.zeros((n, 1))
 
-    plot = np.zeros((n, plays))
+    plot_qa = np.zeros((n, plays))
+    plot_na = np.zeros((n, plays))
 
     for x in range(plays):
 
@@ -43,9 +44,10 @@ def play_bandit(n: int, q_means: np.array, randomization: float) -> (np.array, n
         q_a[action] += (reward - q_a[action]) / n_a[action]
 
         for inx in range(n):
-            plot[inx][x] = q_a[inx]
+            plot_qa[inx][x] = q_a[inx]
+            plot_na[inx][x] = n_a[inx]
 
-    return q_a, plot
+    return q_a, plot_qa, plot_na
 
 
 def main():
@@ -56,9 +58,9 @@ def main():
     n = 10
 
     # Epsilon
-    randomization = 0.1
+    # randomization = 0.1
     # randomization = 0.01
-    # randomization = 0.0
+    randomization = 0.0
 
     # Init stuff
     q_means = np.random.normal(0, 1, n)
@@ -68,26 +70,36 @@ def main():
 
     rounds = 2000
     q_average = np.zeros((n, rounds))
-    q_plot = np.zeros((n, plays))
+    qa_plot = np.zeros((n, plays))
+    na_plot = np.zeros((n, plays))
 
     for inx in range(rounds):
-        q_a, plot = play_bandit(n, q_means, randomization)
+        q_a, plot_qa, plot_na = play_bandit(n, q_means, randomization)
         q_average[:, inx] = q_a.reshape(10)
 
-        q_plot += plot
+        qa_plot += plot_qa
+        na_plot += plot_na
 
         if inx % 200 == 0:
             print("t =", inx)
 
-    q_plot = np.divide(q_plot, rounds)
-
-    plt.figure(0)
+    qa_plot = np.divide(qa_plot, rounds)
+    na_plot = np.divide(na_plot, rounds)
 
     for inx in range(n):
-        plt.plot(q_plot[inx], label="%1.2f" % q_means[inx])
 
+        plt.figure(0)
+        plt.plot(qa_plot[inx], label="%1.2f" % q_means[inx])
+
+        plt.figure(1)
+        plt.plot(na_plot[inx], label="%1.2f" % q_means[inx])
+
+    plt.figure(0)
     plt.legend()
-    plt.savefig(f"ml.exercise.07.random-{randomization}.png", dpi=550)
+    plt.savefig(f"ml.exercise.07.qa.random-{randomization}.png", dpi=550)
+    plt.figure(1)
+    plt.legend()
+    plt.savefig(f"ml.exercise.07.na.random-{randomization}.png", dpi=550)
 
     print("q_average", np.mean(q_average, axis=1))
 
